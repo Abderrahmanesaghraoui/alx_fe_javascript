@@ -10,15 +10,59 @@ function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
+// Function to populate categories in the dropdown
+function populateCategories() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  const categories = [...new Set(quotes.map(quote => quote.category))]; // Extract unique categories
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Reset dropdown
+  categories.forEach(category => {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+
+  // Restore the last selected filter from local storage
+  const lastFilter = localStorage.getItem('lastFilter');
+  if (lastFilter) {
+    categoryFilter.value = lastFilter;
+  }
+}
+
+// Function to filter quotes based on the selected category
+function filterQuotes() {
+  const selectedCategory = document.getElementById('categoryFilter').value;
+  localStorage.setItem('lastFilter', selectedCategory); // Save the selected filter
+
+  const filteredQuotes = selectedCategory === 'all'
+    ? quotes
+    : quotes.filter(quote => quote.category === selectedCategory);
+
+  displayQuotes(filteredQuotes);
+}
+
+// Function to display quotes
+function displayQuotes(quotesToDisplay) {
+  const quoteDisplay = document.getElementById('quoteDisplay');
+  quoteDisplay.innerHTML = quotesToDisplay.length > 0
+    ? quotesToDisplay.map(quote => `<p><strong>${quote.text}</strong> <em>(${quote.category})</em></p>`).join('')
+    : 'No quotes found for this category.';
+}
+
 // Function to display a random quote
 function showRandomQuote() {
-  const quoteDisplay = document.getElementById('quoteDisplay');
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const randomQuote = quotes[randomIndex];
-  quoteDisplay.innerHTML = `<strong>${randomQuote.text}</strong> <em>(${randomQuote.category})</em>`;
+  const selectedCategory = document.getElementById('categoryFilter').value;
+  const filteredQuotes = selectedCategory === 'all'
+    ? quotes
+    : quotes.filter(quote => quote.category === selectedCategory);
 
-  // Store the last viewed quote in session storage (optional)
-  sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
+  if (filteredQuotes.length > 0) {
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const randomQuote = filteredQuotes[randomIndex];
+    displayQuotes([randomQuote]);
+  } else {
+    displayQuotes([]);
+  }
 }
 
 // Function to add a new quote
@@ -29,9 +73,10 @@ function addQuote() {
   if (newQuoteText && newQuoteCategory) {
     quotes.push({ text: newQuoteText, category: newQuoteCategory });
     saveQuotes(); // Save updated quotes to local storage
+    populateCategories(); // Update the category dropdown
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
-    showRandomQuote(); // Optionally show the newly added quote
+    filterQuotes(); // Refresh the displayed quotes
   } else {
     alert('Please fill in both the quote and category fields.');
   }
@@ -59,8 +104,9 @@ function importFromJsonFile(event) {
       const importedQuotes = JSON.parse(event.target.result);
       quotes.push(...importedQuotes);
       saveQuotes(); // Save updated quotes to local storage
+      populateCategories(); // Update the category dropdown
       alert('Quotes imported successfully!');
-      showRandomQuote(); // Optionally show a random quote after import
+      filterQuotes(); // Refresh the displayed quotes
     } catch (error) {
       alert('Invalid JSON file. Please upload a valid JSON file.');
     }
@@ -71,5 +117,6 @@ function importFromJsonFile(event) {
 // Event listener for the "Show New Quote" button
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
-// Initial quote display
-showRandomQuote();
+// Initial setup
+populateCategories(); // Populate categories in the dropdown
+filterQuotes(); // Display quotes based on the last selected filter
