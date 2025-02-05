@@ -13,8 +13,15 @@ body {
     margin: 5px;
     cursor: pointer;
   }
-  input {
+  input, select {
     padding: 10px;
     margin: 5px;
     width: 200px;
+  }
+  #notification {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #e0f7fa;
+    display: none;
   }
